@@ -26,6 +26,17 @@ export async function POST(
 
     const supabase = await createClient();
 
+    const { data: project, error: projectError } = await supabase
+      .from("projects")
+      .select("id")
+      .eq("id", id)
+      .eq("user_id", userId)
+      .single();
+
+    if (projectError || !project) {
+      return NextResponse.json({ error: "Project not found" }, { status: 404 });
+    }
+
     const { data, error } = await supabase
       .from("tasks")
       .insert({ title, description, status, project_id: id, user_id: userId })

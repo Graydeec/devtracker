@@ -26,8 +26,6 @@ export default function Home() {
     );
   }
 
-  console.log(session?.getToken());
-
   // Create a `client` object for accessing Supabase data using the Clerk token
   const client = createClerkSupabaseClient();
 

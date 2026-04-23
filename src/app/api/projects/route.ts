@@ -28,6 +28,7 @@ export async function GET() {
     const { data, error } = await supabase
       .from("projects")
       .select("*")
+      .eq("user_id", userId)
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -59,11 +60,48 @@ export async function POST(request: Request) {
     // const from   = (page - 1) * limit
     // const to     = from + limit - 1
 
-    const { name, description, status } = await request.json();
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    }
 
-    if (!name?.trim()) {
+    if (!body || typeof body !== "object" || Array.isArray(body)) {
+      return NextResponse.json(
+        { error: "Invalid request body" },
+        { status: 400 },
+      );
+    }
+
+    const { name, description, status } = body as {
+      name?: unknown;
+      description?: unknown;
+      status?: unknown;
+    };
+
+    if (typeof name !== "string" || !name.trim()) {
       return NextResponse.json(
         { error: "Project name is required" },
+        { status: 400 },
+      );
+    }
+
+    if (description != null && typeof description !== "string") {
+      return NextResponse.json(
+        { error: "Project description must be a string" },
+        { status: 400 },
+      );
+    }
+
+    const allowedStatuses = ["planning", "in-progress", "completed"] as const;
+    if (
+      status != null &&
+      (typeof status !== "string" ||
+        !allowedStatuses.includes(status as (typeof allowedStatuses)[number]))
+    ) {
+      return NextResponse.json(
+        { error: "Invalid project status" },
         { status: 400 },
       );
     }
@@ -72,7 +110,12 @@ export async function POST(request: Request) {
 
     const { data, error } = await supabase
       .from("projects")
-      .insert({ name, description, status, user_id: userId })
+      .insert({
+        name: name.trim(),
+        description: description ?? null,
+        ...(status == null ? {} : { status }),
+        user_id: userId,
+      })
       .select()
       .single();
 
