@@ -1,0 +1,89 @@
+import { createClient } from "@/lib/supabase";
+import { auth } from "@clerk/nextjs/server";
+import { NextResponse } from "next/server";
+
+// type ProjectStatus = "planning" | "in-progress" | "completed";
+
+// interface Project {
+//   id: string;
+//   name: string;
+//   description: string | null;
+//   status: ProjectStatus;
+// }
+
+export async function GET() {
+  try {
+    // 1. Check if the user is authenticated in the Clerk
+    const { userId } = await auth();
+
+    if (!userId) {
+      return new Response("Unauthorized", { status: 401 });
+    }
+
+    // 2. Initialize the Supabase client with the user's token
+    const supabase = await createClient();
+
+    // 3. Fetch Data
+    // RLS handles the "where user_id = userId" filter automatically
+    const { data, error } = await supabase
+      .from("projects")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.log("Supabase Error: ", error.message);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json(data);
+  } catch (err) {
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 },
+    );
+  }
+}
+
+export async function POST(request: Request) {
+  try {
+    const { userId } = await auth();
+
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    //     const { searchParams } = new URL(request.url)
+    // const status = searchParams.get('status')
+    // const page   = Number(searchParams.get('page')  ?? 1)
+    // const limit  = Number(searchParams.get('limit') ?? 10)
+    // const from   = (page - 1) * limit
+    // const to     = from + limit - 1
+
+    const { name, description, status } = await request.json();
+
+    if (!name?.trim()) {
+      return NextResponse.json(
+        { error: "Project name is required" },
+        { status: 400 },
+      );
+    }
+
+    const supabase = await createClient();
+
+    const { data, error } = await supabase
+      .from("projects")
+      .insert({ name, description, status, user_id: userId })
+      .select()
+      .single();
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+    return NextResponse.json(data);
+  } catch (err) {
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 },
+    );
+  }
+}
