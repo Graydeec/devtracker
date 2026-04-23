@@ -15,6 +15,7 @@ export async function GET() {
     const { data, error } = await supabase
       .from("tasks")
       .select("*")
+      .eq("user_id", userId)
       .order("created_at", { ascending: false });
 
     if (error) {

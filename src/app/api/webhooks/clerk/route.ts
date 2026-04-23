@@ -32,8 +32,7 @@ export async function POST(req: Request) {
   }
 
   //   2. Get the body
-  const payload = await req.json();
-  const body = JSON.stringify(payload);
+  const body = await req.text();
 
   //   3. Verify the signature (Security!)
   const wh = new Webhook(process.env.CLERK_WEBHOOK_SECRET!);
