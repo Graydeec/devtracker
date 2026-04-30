@@ -4,6 +4,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import PublicHeader from "@/components/PublicHeader";
 import "./globals.css"; // ← Import here (correct path)
+import Sidebar from "@/components/Sidebar";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,10 +29,9 @@ export default function RootLayout({
   return (
     <ClerkProvider afterSignOutUrl="/">
       <html lang="en">
-        <body
-          className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-        >
-          <PublicHeader />
+        <body className={`${geistSans.variable} ${geistMono.variable}`}>
+          {/* <Sidebar />  */}
+          {/* <PublicHeader /> */}
           {children}
         </body>
       </html>
